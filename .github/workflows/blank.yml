@@ -1,5 +1,20 @@
 # This is a basic workflow to help you get started with Actions
+name: Salesforce Release and Deployment
 
+on:
+  push:
+    branches:
+      - release/*  # Trigger on release branch creation
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Select action to trigger'
+        required: true
+        type: choice
+        options:
+          - validate
+          - deploy
+          - both
 name: CI
 
 # Controls when the workflow will run
