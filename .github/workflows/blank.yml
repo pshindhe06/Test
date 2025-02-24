@@ -1,36 +1,100 @@
-# This is a basic workflow to help you get started with Actions
+name: Salesforce Release and Deployment
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - release/*  # Trigger on release branch creation
+  workflow_dispatch:  # Enable manual triggering with inputs
+    inputs:
+      action:
+        description: 'Select action to trigger'
+        required: true
+        type: choice
+        options:
+          - validate
+          - deploy
+          - both  # Allows selection of either validate, deploy, or both
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  validate-prod:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    if: github.event.inputs.action == 'validate' || github.event.inputs.action == 'both'  # Run if 'validate' or 'both' is selected
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Checkout Release Branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Set up Salesforce CLI
+        uses: sfdx/actions/setup-sfdx@v1
+        with:
+          sfdx-version: '7.x'
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Install sfdx-git-delta plugin
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          npm install -g sfdx-cli
+          npx sfdx plugins:install sfdx-git-delta
+
+      - name: Populate auth file with SFDX_URL secret of the QA
+        shell: bash
+        run: |
+          echo ${{ secrets.SFDX_DEMO_AUTH }} > ./SFDX_INTEGRATION_URL.txt
+
+      - name: Authenticate to Salesforce Prod Org
+        run: |
+          npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -s -a QA
+
+      - name: Generate Delta Package for Prod (Release vs Master)
+        run: |
+          mkdir delta-package
+          npx sfdx sgd:source:delta --to "refs/heads/master" --from "refs/heads/release/${GITHUB_REF##*/}" --output delta-package/ --generate-delta --source force-app/
+
+      - name: Validate Delta Changes in Salesforce Prod Org
+        run: |
+          mkdir -p validation-reports
+          sfdx force:source:deploy -x delta-package/package/package.xml -u ${{ secrets.SFDX_DEMO_AUTH }} --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json
+
+      - name: Display Validation Results
+        run: |
+          cat validation-reports/validation-report.json
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: validate-prod
+    if: github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both'  # Run if 'deploy' or 'both' is selected
+    steps:
+      - name: Checkout Release Branch
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync Delta Changes from Release Branch to Master (before deployment)
+        run: |
+          git fetch origin
+          git checkout master
+          git merge origin/release/${GITHUB_REF##*/}  
+          git push origin master
+
+      - name: Set up Salesforce CLI
+        uses: sfdx/actions/setup-sfdx@v1
+        with:
+          sfdx-version: '7.x'
+
+      - name: Authenticate to Salesforce Prod Org for deployment
+        run: |
+          npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -s -a QA
+
+      - name: Deploy Validated Delta Components to Salesforce Prod Org
+        run: |
+          sfdx force:source:deploy -x delta-package/package/package.xml -u ${{ secrets.SFDX_INTEGRATION_URL }} -w 10
+
+      - name: Run Apex Tests in Salesforce Prod Org
+        run: |
+          sfdx force:apex:test:run --resultformat human --codecoverage --synchronous --outputdir ./testResults
+
+      - name: Check Code Coverage for Prod
+        run: |
+          coverage_check=$(sfdx force:apex:test:run --resultformat json --codecoverage --synchronous | jq '.result.coverage >= 75')
+          if [ "$coverage_check" != "true" ]; then
+            exit 1
+          fi
