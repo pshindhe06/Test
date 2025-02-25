@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Position_Status</fullName>
+    <active>false</active>
+    <description>Position Status.</description>
+    <errorConditionFormula>ISPICKVAL(Status__c,&quot;&quot;) || ISPICKVAL(Type__c, &quot;&quot;)</errorConditionFormula>
+    <errorDisplayField>Status__c</errorDisplayField>
+    <errorMessage>Please select Status &amp; Type of Position.</errorMessage>
+</ValidationRule>
