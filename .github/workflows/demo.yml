@@ -83,7 +83,7 @@ jobs:
         run: |
           echo "Generating delta package for new, modified, and deleted components between release and master..."
           mkdir -p delta-package
-          sf sgd source delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/
+          sf sgd source delta --to "HEAD" --from "HEAD~1" -o delta-package/ --generate-delta -s force-app/
       
           # npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/
 
