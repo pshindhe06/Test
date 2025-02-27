@@ -37,7 +37,7 @@ jobs:
       # Authenticate to Salesforce Prod Org using OAuth
       - name: Authenticate to Salesforce Prod Org (OAuth)
         run: |
-          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://login.salesforce.com
+          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
 
       # Generate Delta Package for new, modified, and deleted components between release and master branches
       - name: Generate Delta Package for Prod (Release vs Master)
