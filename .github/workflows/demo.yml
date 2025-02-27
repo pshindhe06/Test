@@ -28,15 +28,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Set up Salesforce CLI
-      - name: Set up Salesforce CLI
+      # Install Salesforce CLI (sf)
+      - name: Install Salesforce CLI (sf)
         run: |
-          npm install sfdx-cli
+          npm install @salesforce/cli
+          sf --version  # Check if sf CLI is installed successfully
 
-      # Authenticate to Salesforce Prod Org using OAuth
-      - name: Authenticate to Salesforce Prod Org (OAuth)
+      # Authenticate to Salesforce Prod Org using JWT Authentication
+      - name: Authenticate to Salesforce Prod Org (JWT)
         run: |
-          sf auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_PRIVATE_KEY }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
+          # Save private key to a file for JWT authentication
+          echo "${{ secrets.SALESFORCE_PRIVATE_KEY }}" > private.key
+          
+          # Authenticate using JWT
+          sf auth:jwt:grant --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --jwtkeyfile private.key --username ${{ secrets.SALESFORCE_USERNAME }} --instanceurl https://prakash06-dev-ed.my.salesforce.com/
+
+      # Verify Authentication
+      - name: Verify Authentication
+        run: |
+          sf org display
 
       # Generate Delta Package for Prod (Release vs Master)
       - name: Generate Delta Package for Prod (Release vs Master)
@@ -57,5 +67,3 @@ jobs:
         run: |
           echo "Displaying validation results."
           cat validation-reports/validation-report.json  # Display the validation report content
-
-  
