@@ -1,4 +1,4 @@
-		  name: Salesforce Release and Deployment
+name: Salesforce Release and Deployment
 
 on:
   push:
