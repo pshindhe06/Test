@@ -115,8 +115,8 @@ jobs:
         run: |
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           mkdir -p validation-reports  # Create the folder to store reports  
-          npx sfdx force:source:deploy -x delta-package/package/package.xml -o prakash06 --validate-only  --testlevel RunLocalTests --json --wait 10 > validation-reports/validation-report.json
-     
+          sf dev org deploy --manifest delta-package/package/package.xml --validate --test-level RunLocalTests --json --wait 10 > validation-reports/validation-report.json
+
       - name: Display Validation Report
         run: |
           cat validation-reports/validation-report.json
