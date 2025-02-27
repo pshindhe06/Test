@@ -62,21 +62,21 @@ jobs:
           npm install @salesforce/cli --global
 
       # Install sfdx-git-delta Plugin for Delta Package Generation
-    #  - name: Install sfdx-git-delta Plugin
+  # - name: Install sfdx-git-delta Plugin
        # run: |
         #  echo "Installing sfdx-git-delta plugin..."
          # echo y | npx sfdx plugins:install sfdx-git-delta
           #npx sfdx plugins
           #sf plugins install sfdx-git-delta
           
-      #- name: Install SGD
-        #run: echo y | sf plugins install "sfdx-git-delta@${{ vars.SGD_VERSION }}"
+      - name: Install SGD
+        run: echo y | sf plugins install "sfdx-git-delta@${{ vars.SGD_VERSION }}"
 
           # Installing SFDX GIT Delta plugin
-      - name: 'Installing sfdx git delta'
-        run: | 
-          echo y | npx sfdx plugins:install sfdx-git-delta
-          npx sfdx plugins   
+  #    - name: 'Installing sfdx git delta'
+   #     run: | 
+    #      echo y | npx sfdx plugins:install sfdx-git-delta
+     #     npx sfdx plugins   
 
         
 
@@ -86,17 +86,17 @@ jobs:
           echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
           npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
 
-      - name: 'Create delta packages for new, modified or deleted metadata'
-        run: | 
-          mkdir -p delta-package
-          npx sfdx sgd:source:delta --to "HEAD" --from "HEAD^" -o delta-package/ --generate-delta -s force-app/ --json
+    #  - name: 'Create delta packages for new, modified or deleted metadata'
+     #   run: | 
+      #    mkdir -p delta-package
+       #   npx sfdx sgd:source:delta --to "HEAD" --from "HEAD^" -o delta-package/ --generate-delta -s force-app/ --json
 
       # Generate Delta Package for Prod (Release vs Master)
-      #- name: Generate Delta Package for Prod (Release vs Master)
-        #run: |
+      - name: Generate Delta Package for Prod (Release vs Master)
+        run: |
          # echo "Generating delta package for new, modified, and deleted components between release and master..."
-        #  mkdir delta-package
-       #   sf sgd source delta --to "HEAD" --from "HEAD~1" -o delta-package/ --generate-delta 
+          mkdir delta-package
+          sf sgd source delta --to "HEAD" --from "HEAD~1" --output-dir .
       
           # npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/
 
