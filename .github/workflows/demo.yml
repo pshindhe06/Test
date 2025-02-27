@@ -69,12 +69,12 @@ jobs:
           #npx sfdx plugins
           #sf plugins install sfdx-git-delta
           
-      - #name: Install SGD
+      #- name: Install SGD
         #run: echo y | sf plugins install "sfdx-git-delta@${{ vars.SGD_VERSION }}"
 
           # Installing SFDX GIT Delta plugin
-            - name: 'Installing sfdx git delta'
-              run: | 
+      - name: 'Installing sfdx git delta'
+        run: | 
                   echo y | npx sfdx plugins:install sfdx-git-delta
                   npx sfdx plugins   
 
