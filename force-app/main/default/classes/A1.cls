@@ -6,8 +6,6 @@ public Account acc(string name)
     acc.Name=name;
     return acc;
 /*testing purpose*/
-    Account ac=new Account();
-    ac.Type=type;
-    return ac;
+   
 }
 }
