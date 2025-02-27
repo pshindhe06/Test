@@ -30,7 +30,7 @@ jobs:
 
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
-        uses: sfdx/actions/setup-sfdx@v1
+        uses: sfactions/sfdx-actions/setup-sfdx@v1
         with:
           sfdx-version: '7.x'
 
@@ -39,7 +39,7 @@ jobs:
         run: |
           sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
 
-      # Generate Delta Package for new, modified, and deleted components between release and master branches
+      # Generate Delta Package for Prod (Release vs Master)
       - name: Generate Delta Package for Prod (Release vs Master)
         run: |
           echo "Generating delta package for new, modified, and deleted components between release and master..."
