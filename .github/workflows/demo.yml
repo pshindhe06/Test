@@ -27,7 +27,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
+# Explicitly fetch master branch as well
+      - name: Checkout Master Branch
+        run: |
+          git fetch origin master:refs/remotes/origin/master  # Ensure master is fetched and available
+          
  # Explicitly fetch all branches and tags
       - name: Fetch all branches and tags
         run: |
