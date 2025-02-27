@@ -36,5 +36,5 @@ jobs:
       # Authenticate to Salesforce Prod Org using Auth File
       - name: Authenticate to Salesforce Prod Org (Auth File)
         run: |
-          echo "${{ secrets.SFDX_DEMO }}" > sfdx-auth-file.json  # Save the auth file from secrets to a local file
-          sf auth:login --authfile sfdx-auth-file.json --setdefaultusername
+          echo "${{ secrets.SFDX_DEMO }}" > ./ SFDX_DEMO.txt
+          npx sfdx auth:sfdxurl:store -f ./SFDX_DEMO.txt -s -a release
