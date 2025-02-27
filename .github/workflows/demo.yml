@@ -30,9 +30,8 @@ jobs:
 
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
-        uses: sfdx/setup-sfdx-cli@v1
-        with:
-          sfdx-version: '7.x'
+        run: |
+          npm install sfdx-cli
 
       # Authenticate to Salesforce Prod Org using OAuth
       - name: Authenticate to Salesforce Prod Org (OAuth)
@@ -82,9 +81,8 @@ jobs:
 
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
-        uses: sfdx/setup-sfdx-cli@v1
-        with:
-          sfdx-version: '7.x'
+        run: |
+          npm install sfdx-cli
 
       # Authenticate to Salesforce Prod Org using OAuth
       - name: Authenticate to Salesforce Prod Org (OAuth)
