@@ -82,8 +82,8 @@ jobs:
       - name: Generate Delta Package for Prod (Release vs Master)
         run: |
           echo "Generating delta package for new, modified, and deleted components between release and master..."
-          mkdir -p delta-package
-          sf sgd source delta --to "HEAD" --from "HEAD~1" -o delta-package/ --generate-delta -s force-app/
+          mkdir delta-package
+          sf sgd source delta --to "HEAD" --from "HEAD~1" -o delta-package/ --generate-delta 
       
           # npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/
 
