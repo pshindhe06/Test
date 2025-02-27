@@ -71,9 +71,4 @@ jobs:
           echo "Displaying validation results."
           cat validation-reports/validation-report.json  # Display the validation report content
           
-      # Optional: Failure Handling
-      - name: Fail if Validation Fails
-        if: failure()
-        run: |
-          echo "Validation failed, please check the report above."
-          exit 1  # You can also add more logic for specific failure conditions
+
