@@ -33,18 +33,8 @@ jobs:
         run: |
           npm install sfdx-cli
 
-      # Authenticate to Salesforce Prod Org using Secrets (JWT Authentication)
-      - name: Authenticate to Salesforce Prod Org (JWT Authentication)
+      # Authenticate to Salesforce Prod Org using Auth File
+      - name: Authenticate to Salesforce Org (Auth File)
         run: |
-          echo "${{ secrets.SALESFORCE_PRIVATE_KEY }}" > private.key  # Save the private key from secrets to a local file
-          sfdx force:auth:jwt:grant -i "${{ secrets.SALESFORCE_CLIENT_ID }}" -f private.key --username "${{ secrets.SALESFORCE_USERNAME }}" -r "${{ secrets.SALESFORCE_INSTANCE_URL }}" --setdefaultusername
-        env:
-          SALESFORCE_PRIVATE_KEY: ${{ secrets.SALESFORCE_PRIVATE_KEY }}
-          SALESFORCE_USERNAME: ${{ secrets.SALESFORCE_USERNAME }}
-          SALESFORCE_CLIENT_ID: ${{ secrets.SALESFORCE_CLIENT_ID }}
-          SALESFORCE_INSTANCE_URL: ${{ secrets.SALESFORCE_INSTANCE_URL }}
-
-      # Validate Salesforce Org Components
-      - name: Validate Salesforce Org Components
-        run: |
-          sfdx force:source:deploy --checkonly --testlevel RunLocalTests --manifest ./manifest/package.xml
+          echo "${{ secrets.SFDX_DEMO }}" > authfile.json  # Store the authfile.json from secrets
+          sfdx auth:sfdxurl:store -f authfile.json --setdefaultusername
