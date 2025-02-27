@@ -36,7 +36,7 @@ jobs:
       # Authenticate to Salesforce Prod Org using OAuth
       - name: Authenticate to Salesforce Prod Org (OAuth)
         run: |
-          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
+          sf auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_PRIVATE_KEY }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
 
       # Generate Delta Package for Prod (Release vs Master)
       - name: Generate Delta Package for Prod (Release vs Master)
@@ -50,7 +50,7 @@ jobs:
         run: |
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           mkdir -p validation-reports  # Create the folder to store reports
-          sfdx force:source:deploy -x delta-package/package/package.xml --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
+          sf project deploy start -x delta-package/package/package.xml --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
 
       # Optional: Display Validation Results (can be enhanced with failure logic)
       - name: Display Validation Results
@@ -58,55 +58,4 @@ jobs:
           echo "Displaying validation results."
           cat validation-reports/validation-report.json  # Display the validation report content
 
-  deploy-prod:
-    runs-on: ubuntu-latest
-    needs: validate-prod
-    # Ensure deploy-prod runs only when 'deploy' or 'both' is selected
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
-
-    steps:
-      # Checkout the release branch
-      - name: Checkout Release Branch
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      # Sync delta changes from release branch to master branch before deployment
-      - name: Sync Delta Changes from Release Branch to Master (before deployment)
-        run: |
-          git fetch origin
-          git checkout master  # Checkout the master branch
-          git merge origin/release/${GITHUB_REF##*/}  # Merge the release branch into master
-          git push origin master  # Push the updated master branch
-
-      # Set up Salesforce CLI
-      - name: Set up Salesforce CLI
-        run: |
-          npm install sfdx-cli
-
-      # Authenticate to Salesforce Prod Org using OAuth
-      - name: Authenticate to Salesforce Prod Org (OAuth)
-        run: |
-          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
-
-      # Deploy Only Validated Delta Components to Salesforce Prod Org
-      - name: Deploy Validated Delta Components to Salesforce Prod Org
-        run: |
-          echo "Deploying validated delta components to Salesforce Prod Org..."
-          sfdx force:source:deploy -x delta-package/package/package.xml -w 10
-
-      # Run Apex Tests in Salesforce Prod Org
-      - name: Run Apex Tests in Salesforce Prod Org
-        run: |
-          echo "Running Apex tests in Salesforce Prod Org..."
-          sfdx force:apex:test:run --resultformat human --codecoverage --synchronous --outputdir ./testResults
-
-      # Check Code Coverage and Fail if Below 75%
-      - name: Check Code Coverage for Prod
-        run: |
-          echo "Checking Code Coverage..."
-          coverage_check=$(sfdx force:apex:test:run --resultformat json --codecoverage --synchronous | jq '.result.coverage >= 75')
-          if [ "$coverage_check" != "true" ]; then
-            echo "Code coverage is below 75%. Failing the deployment."
-            exit 1
-          fi
+  
