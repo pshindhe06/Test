@@ -36,7 +36,7 @@ jobs:
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
         run: |
-          npm install sfdx-cli
+          npm install @salesforce/cli --global
 
       # Authenticate to Salesforce Prod Org using Auth File
       - name: Authenticate to Salesforce Org (Auth File)
