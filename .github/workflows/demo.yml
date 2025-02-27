@@ -82,6 +82,6 @@ jobs:
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           mkdir -p validation-reports  # Create the folder to store reports
          
-          sf deploy metadata --metadata "delta-package/package/package.xml" --checkonly --test-level RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
+          sf deploy metadata --metadata "delta-package/package/package.xml" --checkonly --test-level RunLocalTests --resultformat json --wait 10 -o prakash06 > validation-reports/validation-report.json  # Store results as JSON
 
 
