@@ -76,6 +76,11 @@ jobs:
       
           npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/
 
+      # Debugging step: List Delta Package Files
+      - name: List Delta Package Files
+        run: |
+          ls -R delta-package
+          
       # Validate Delta Changes in Salesforce Prod Org
       - name: Validate Delta Changes in Salesforce Prod Org
         run: |
