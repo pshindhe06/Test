@@ -43,7 +43,8 @@ jobs:
       - name: Install sfdx-git-delta Plugin
         run: |
           echo "Installing sfdx-git-delta plugin..."
-          npx sfdx plugins:install sfdx-git-delta
+          echo y | npx sfdx plugins:install sfdx-git-delta
+          npx sfdx plugins
 
       # Authenticate to Salesforce Prod Org using Auth File
       - name: Authenticate to Salesforce Org (Auth File)
