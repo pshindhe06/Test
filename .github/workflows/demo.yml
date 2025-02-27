@@ -28,30 +28,30 @@ jobs:
         with:
           fetch-depth: 0
 
-# Install Node JS and related dependencies so that it can be able to read the build.xml for TestCases
+      # Install Node.js for SFDX CLI
       - name: 'Installing Node.js for SFDX CLI'
         uses: actions/setup-node@v4
         with:
-                node-version: 21
+          node-version: 21
+
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
         run: |
           npm install @salesforce/cli --global
 
-      # Authenticate to Salesforce Prod Org using Auth File
-      - name: Authenticate to Salesforce Org (Auth File)
-        run: |
-           run: |
-                  echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
-                  npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
-
-      # Install Salesforce Git Delta Plugin (if not installed)
-      - name: Install Salesforce Git Delta Plugin
+      # Install sfdx-git-delta Plugin for Delta Package Generation
+      - name: Install sfdx-git-delta Plugin
         run: |
           echo "Installing sfdx-git-delta plugin..."
           npx sfdx plugins:install sfdx-git-delta
-          
-  # Generate Delta Package for Prod (Release vs Master)
+
+      # Authenticate to Salesforce Prod Org using Auth File
+      - name: Authenticate to Salesforce Org (Auth File)
+        run: |
+          echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
+          npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
+
+      # Generate Delta Package for Prod (Release vs Master)
       - name: Generate Delta Package for Prod (Release vs Master)
         run: |
           echo "Generating delta package for new, modified, and deleted components between release and master..."
@@ -65,10 +65,4 @@ jobs:
           mkdir -p validation-reports  # Create the folder to store reports
           sfdx force:source:deploy -x delta-package/package/package.xml --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
 
-      # Optional: Display Validation Results (can be enhanced with failure logic)
-      - name: Display Validation Results
-        run: |
-          echo "Displaying validation results."
-          cat validation-reports/validation-report.json  # Display the validation report content
-          
 
