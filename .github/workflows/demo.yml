@@ -44,3 +44,31 @@ jobs:
            run: |
                   echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
                   npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
+
+
+  # Generate Delta Package for Prod (Release vs Master)
+      - name: Generate Delta Package for Prod (Release vs Master)
+        run: |
+          echo "Generating delta package for new, modified, and deleted components between release and master..."
+          mkdir delta-package
+          npx sfdx sgd:source:delta --to "refs/heads/master" --from "refs/heads/release/${GITHUB_REF##*/}" --output delta-package/ --generate-delta --source force-app/
+
+      # Validate Delta Changes in Salesforce Prod Org
+      - name: Validate Delta Changes in Salesforce Prod Org
+        run: |
+          echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
+          mkdir -p validation-reports  # Create the folder to store reports
+          sfdx force:source:deploy -x delta-package/package/package.xml --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
+
+      # Optional: Display Validation Results (can be enhanced with failure logic)
+      - name: Display Validation Results
+        run: |
+          echo "Displaying validation results."
+          cat validation-reports/validation-report.json  # Display the validation report content
+          
+      # Optional: Failure Handling
+      - name: Fail if Validation Fails
+        if: failure()
+        run: |
+          echo "Validation failed, please check the report above."
+          exit 1  # You can also add more logic for specific failure conditions
