@@ -28,42 +28,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Install Salesforce CLI (sf)
-      - name: Install Salesforce CLI (sf)
+      # Set up Salesforce CLI
+      - name: Set up Salesforce CLI
         run: |
-          npm install @salesforce/cli
-          sf --version  # Check if sf CLI is installed successfully
+          npm install sfdx-cli
 
-      # Authenticate to Salesforce Prod Org using JWT Authentication
-      - name: Authenticate to Salesforce Prod Org (JWT)
+      # Authenticate to Salesforce Prod Org using Auth File
+      - name: Authenticate to Salesforce Prod Org (Auth File)
         run: |
-          # Save private key to a file for JWT authentication
-          echo "${{ secrets.SALESFORCE_PRIVATE_KEY }}" > private.key
-          
-          # Authenticate using JWT
-          sf auth:jwt:grant --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --jwtkeyfile private.key --username ${{ secrets.SALESFORCE_USERNAME }} --instanceurl https://prakash06-dev-ed.my.salesforce.com/
-
-      # Verify Authentication
-      - name: Verify Authentication
-        run: |
-          sf org display
-
-      # Generate Delta Package for Prod (Release vs Master)
-      - name: Generate Delta Package for Prod (Release vs Master)
-        run: |
-          echo "Generating delta package for new, modified, and deleted components between release and master..."
-          mkdir delta-package
-          npx sfdx sgd:source:delta --to "refs/heads/master" --from "refs/heads/release/${GITHUB_REF##*/}" --output delta-package/ --generate-delta --source force-app/
-
-      # Validate Delta Changes in Salesforce Prod Org
-      - name: Validate Delta Changes in Salesforce Prod Org
-        run: |
-          echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
-          mkdir -p validation-reports  # Create the folder to store reports
-          sf project deploy start -x delta-package/package/package.xml --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
-
-      # Optional: Display Validation Results (can be enhanced with failure logic)
-      - name: Display Validation Results
-        run: |
-          echo "Displaying validation results."
-          cat validation-reports/validation-report.json  # Display the validation report content
+          echo "${{ secrets.SFDX_DEMO }}" > sfdx-auth-file.json  # Save the auth file from secrets to a local file
+          sf auth:login --authfile sfdx-auth-file.json --setdefaultusername
