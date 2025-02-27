@@ -87,7 +87,8 @@ jobs:
       # Authenticate to Salesforce Prod Org using OAuth
       - name: Authenticate to Salesforce Prod Org (OAuth)
         run: |
-          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://login.salesforce.com
+          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
+          
 
       # Deploy Only Validated Delta Components to Salesforce Prod Org
       - name: Deploy Validated Delta Components to Salesforce Prod Org
