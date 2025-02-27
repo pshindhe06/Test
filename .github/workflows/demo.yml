@@ -75,8 +75,8 @@ jobs:
           # Installing SFDX GIT Delta plugin
       - name: 'Installing sfdx git delta'
         run: | 
-                  echo y | npx sfdx plugins:install sfdx-git-delta
-                  npx sfdx plugins   
+          echo y | npx sfdx plugins:install sfdx-git-delta
+          npx sfdx plugins   
 
         
 
