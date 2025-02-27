@@ -30,7 +30,7 @@ jobs:
 
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
-        uses: sfdx/actions/setup-sfdx@v1
+        uses: sfdx/setup-sfdx-cli@v2
         with:
           sfdx-version: '7.x'
 
@@ -82,7 +82,7 @@ jobs:
 
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
-        uses: sfdx/actions/setup-sfdx@v1
+        uses: sfdx/setup-sfdx-cli@v2
         with:
           sfdx-version: '7.x'
 
