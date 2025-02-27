@@ -86,17 +86,17 @@ jobs:
           echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
           npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
 
-                  - name: 'Create delta packages for new, modified or deleted metadata'
-              run: | 
-                  mkdir modified-files
-                  npx sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output modified-files/ --generate-delta --source force-app/
+      - name: 'Create delta packages for new, modified or deleted metadata'
+        run: | 
+          mkdir modified-files
+          npx sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output modified-files/ --generate-delta --source force-app/
 
       # Generate Delta Package for Prod (Release vs Master)
-      - name: Generate Delta Package for Prod (Release vs Master)
-        run: |
-          echo "Generating delta package for new, modified, and deleted components between release and master..."
-          mkdir delta-package
-          sf sgd source delta --to "HEAD" --from "HEAD~1" -o delta-package/ --generate-delta 
+      #- name: Generate Delta Package for Prod (Release vs Master)
+        #run: |
+         # echo "Generating delta package for new, modified, and deleted components between release and master..."
+        #  mkdir delta-package
+       #   sf sgd source delta --to "HEAD" --from "HEAD~1" -o delta-package/ --generate-delta 
       
           # npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/
 
