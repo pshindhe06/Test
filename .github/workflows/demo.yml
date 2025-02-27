@@ -4,16 +4,16 @@ on:
   push:
     branches:
       - release/*  # Trigger on release branch creation
-  workflow_dispatch: 
-      inputs:
-        action:
-           description: 'Select action to trigger'
-           required: true
-           type: choice
-           options:
-            - validate
-            - deploy
-            - both 
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Select action to trigger'
+        required: true
+        type: choice
+        options:
+          - validate
+          - deploy
+          - both
 
 jobs:
   validate-prod:
@@ -25,39 +25,24 @@ jobs:
       - name: Checkout Release Branch
         uses: actions/checkout@v3
         with:
-            fetch-depth: 0
-     
-        
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
         uses: sfdx/actions/setup-sfdx@v1
         with:
           sfdx-version: '7.x'
 
-      # Install sfdx-git-delta plugin
-      - name: Install sfdx-git-delta plugin
+      # Authenticate to Salesforce Prod Org using OAuth
+      - name: Authenticate to Salesforce Prod Org (OAuth)
         run: |
-          npm install -g sfdx-cli
-          npx sfdx plugins:install sfdx-git-delta
-
-            # Store secret for target Org.
-            - name: 'Populate auth file with SFDX_URL secret of the QA'
-              shell: bash
-              run: |
-                  echo ${{ secrets.SFDX_DEMO}} > ./SFDX_DEMO.txt
-                  
-      # Authenticate to Salesforce Prod Org for validation
-      - name: Authenticate to Salesforce Prod Org
-        run: |
-     
-          run: npx sfdx auth:sfdxurl:store -f ./SFDX_DEMO.txt -s -a QA
+          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://login.salesforce.com
 
       # Generate Delta Package for new, modified, and deleted components between release and master branches
       - name: Generate Delta Package for Prod (Release vs Master)
         run: |
           echo "Generating delta package for new, modified, and deleted components between release and master..."
           mkdir delta-package
-          # Generate the delta package using sfdx-git-delta comparing release branch with master branch
           npx sfdx sgd:source:delta --to "refs/heads/master" --from "refs/heads/release/${GITHUB_REF##*/}" --output delta-package/ --generate-delta --source force-app/
 
       # Validate Delta Changes in Salesforce Prod Org
@@ -65,26 +50,26 @@ jobs:
         run: |
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           mkdir -p validation-reports  # Create the folder to store reports
-          sfdx force:source:deploy -x delta-package/package/package.xml -u ${{ secrets.SFDX_DEMO}} --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
+          sfdx force:source:deploy -x delta-package/package/package.xml --checkonly --testlevel RunLocalTests --resultformat json --wait 10 > validation-reports/validation-report.json  # Store results as JSON
 
       # Optional: Display Validation Results (can be enhanced with failure logic)
       - name: Display Validation Results
         run: |
           echo "Displaying validation results."
           cat validation-reports/validation-report.json  # Display the validation report content
-  
+
   deploy-prod:
     runs-on: ubuntu-latest
     needs: validate-prod
     if: github.ref == 'refs/heads/release/*'  # Ensure it runs for a release branch
-    
+
     steps:
       # Checkout the release branch
       - name: Checkout Release Branch
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       # Sync delta changes from release branch to master branch before deployment
       - name: Sync Delta Changes from Release Branch to Master (before deployment)
         run: |
@@ -99,16 +84,16 @@ jobs:
         with:
           sfdx-version: '7.x'
 
-      # Authenticate to Salesforce Prod Org for deployment
-      - name: Authenticate to Salesforce Prod Org
-        
-        run: npx sfdx auth:sfdxurl:store -f ./SFDX_DEMO.txt -s -a QA
+      # Authenticate to Salesforce Prod Org using OAuth
+      - name: Authenticate to Salesforce Prod Org (OAuth)
+        run: |
+          sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://login.salesforce.com
 
       # Deploy Only Validated Delta Components to Salesforce Prod Org
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
           echo "Deploying validated delta components to Salesforce Prod Org..."
-          sfdx force:source:deploy -x delta-package/package/package.xml -u ${{ secrets.SFDX_DEMO }} -w 10
+          sfdx force:source:deploy -x delta-package/package/package.xml -w 10
 
       # Run Apex Tests in Salesforce Prod Org
       - name: Run Apex Tests in Salesforce Prod Org
