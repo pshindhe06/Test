@@ -18,14 +18,15 @@ on:
 jobs:
   validate-prod:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/release/*'  # Ensure it runs for a release branch
-    
+    # Ensure validate-prod runs when 'validate' or 'both' is selected, or for release branches
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
+
     steps:
       # Checkout the release branch
       - name: Checkout Release Branch
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
@@ -61,7 +62,8 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-latest
     needs: validate-prod
-    if: github.ref == 'refs/heads/release/*'  # Ensure it runs for a release branch
+    # Ensure deploy-prod runs only when 'deploy' or 'both' is selected
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
 
     steps:
       # Checkout the release branch
@@ -88,7 +90,6 @@ jobs:
       - name: Authenticate to Salesforce Prod Org (OAuth)
         run: |
           sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
-          
 
       # Deploy Only Validated Delta Components to Salesforce Prod Org
       - name: Deploy Validated Delta Components to Salesforce Prod Org
