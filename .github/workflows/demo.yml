@@ -70,7 +70,7 @@ jobs:
           echo "Generating delta package for new, modified, and deleted components between release and master..."
           mkdir delta-package
           echo "Release Branch: ${GITHUB_REF##*/}"
-          npx sfdx sgd:source:delta --to"refs/heads/master" --from"refs/heads/release/${GITHUB_REF##*/}" -o delta-package/ --generate-delta -s force-app/
+          npx sfdx sgd:source:delta --to "refs/heads/master" --from "refs/heads/release/${GITHUB_REF##*/}" -o delta-package/ --generate-delta -s force-app/
 
       # Validate Delta Changes in Salesforce Prod Org
       - name: Validate Delta Changes in Salesforce Prod Org
