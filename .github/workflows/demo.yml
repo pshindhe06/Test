@@ -27,16 +27,22 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Checkout Release Branch
+        run: |
+          git fetch origin release:refs/remotes/origin/release
+         
+          
 # Explicitly fetch master branch as well
       - name: Checkout Master Branch
         run: |
-          git fetch origin master:refs/remotes/origin/master  # Ensure master is fetched and available
+          git fetch origin master:refs/remotes/origin/master
           
  # Explicitly fetch all branches and tags
       - name: Fetch all branches and tags
         run: |
           git fetch --all
-          git fetch --tags  # Ensure tags are also fetched
+          git fetch --tags 
 
       # Verify available branches and refs for debugging
       - name: Verify available branches and refs
@@ -94,7 +100,7 @@ jobs:
           sf project deploy validate -x delta-package/package/package.xml -o prakash06  --testlevel RunLocalTests --json --wait 10 > validation-reports/validation-report.json
 
 
-         
+
          
 
 
