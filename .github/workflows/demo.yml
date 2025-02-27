@@ -80,6 +80,11 @@ jobs:
       - name: List Delta Package Files
         run: |
           ls -R delta-package
+
+      - name: Check Package.xml Contents
+        run: |
+         cat delta-package/package/package.xml
+
           
       # Validate Delta Changes in Salesforce Prod Org
       - name: Validate Delta Changes in Salesforce Prod Org
