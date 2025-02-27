@@ -28,6 +28,18 @@ jobs:
         with:
           fetch-depth: 0
 
+ # Explicitly fetch all branches and tags
+      - name: Fetch all branches and tags
+        run: |
+          git fetch --all
+          git fetch --tags  # Ensure tags are also fetched
+
+      # Verify available branches and refs for debugging
+      - name: Verify available branches and refs
+        run: |
+          git branch -r  # List remote branches
+          git show-ref  # Show all refs (helps verify `release/*` and `master` are present)
+
       # Install Node.js for SFDX CLI
       - name: 'Installing Node.js for SFDX CLI'
         uses: actions/setup-node@v4
