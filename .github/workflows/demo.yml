@@ -88,8 +88,8 @@ jobs:
 
       - name: 'Create delta packages for new, modified or deleted metadata'
         run: | 
-          mkdir modified-files
-          npx sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output modified-files/ --generate-delta --source force-app/
+          mkdir delta-package
+          npx sfdx sgd:source:delta --to "HEAD" --from "HEAD^" -o delta-package/ --generate-delta -s force-app/
 
       # Generate Delta Package for Prod (Release vs Master)
       #- name: Generate Delta Package for Prod (Release vs Master)
