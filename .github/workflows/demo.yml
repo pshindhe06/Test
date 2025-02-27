@@ -80,7 +80,7 @@ jobs:
           echo "Generating delta package for new, modified, and deleted components between release and master..."
           mkdir delta-package
       
-          npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/  --verbose
+          npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/ --loglevel debug
 
       # Debugging step: List Delta Package Files
       - name: List Delta Package Files
