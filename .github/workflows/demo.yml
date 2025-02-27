@@ -45,7 +45,12 @@ jobs:
                   echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
                   npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
 
-
+      # Install Salesforce Git Delta Plugin (if not installed)
+      - name: Install Salesforce Git Delta Plugin
+        run: |
+          echo "Installing sfdx-git-delta plugin..."
+          npx sfdx plugins:install sfdx-git-delta
+          
   # Generate Delta Package for Prod (Release vs Master)
       - name: Generate Delta Package for Prod (Release vs Master)
         run: |
