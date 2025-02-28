@@ -19,7 +19,7 @@ jobs:
   validate-prod:
     runs-on: ubuntu-latest
     # Ensure validate-prod runs when 'validate' or 'both' is selected, or for release branches
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
 
     steps:
       # Checkout the release branch
@@ -49,8 +49,9 @@ jobs:
       - name: Extract Test Classes
         id: extract_tests
         run: |
-          test_classes=$(grep -oPm1 "(?<=<test>[A-Za-z0-9_]+)(?=</test>)" manifest/package.xml)
+          test_classes=$(grep -oP "<test>([A-Za-z0-9_]+)</test>" manifest/package.xml | sed -E 's/<test>(.*)<\/test>/\1/')
           echo "test_classes=$test_classes" >> $GITHUB_ENV
+
 
       # Validate Delta Changes in Salesforce Prod Org
       - name: Validate Delta Changes in Salesforce Prod Org
@@ -67,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate-prod
     # Ensure deploy-prod runs only when 'deploy' or 'both' is selected
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
 
     steps:
       # Checkout the release branch
