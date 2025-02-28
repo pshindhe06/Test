@@ -82,13 +82,13 @@ jobs:
           
       - name: Only deploy if validation was successful
         run: |
-           sf project deploy start -x manifest/package.xml -o prakash06
+           sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests
 
       - name: Sync changes from release to master
         run: |
-          git checkout master          
-          git pull origin master
-          git merge ${{ github.ref }} --no-ff -m "Merge release branch into master"
-          git push origin master
+          git checkout main          
+          git pull origin main
+          git merge ${{ github.ref }} --no-ff -m "Merge release branch into main"
+          git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
