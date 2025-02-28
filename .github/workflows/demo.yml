@@ -90,20 +90,27 @@ jobs:
           echo "Debugging: Contents of validation_result.txt"
           cat validation_result.txt  # Output the contents of the file for debugging
 
+      - name: Debug - Check file existence and size
+        run: |
+          echo "Debugging: Checking if validation_result.txt exists and its size"
+          ls -l validation_result.txt  # Check if file exists and print file size
+
       - name: Read Validation Result and Trim Whitespace
         run: |
           echo "Reading validation result from the file..."
           validation_result=$(cat validation_result.txt)  # Read the result from the file
-          validation_result=$(echo "$validation_result" | xargs)  # Trim any leading/trailing whitespace
+          echo "Read Validation result: '$validation_result'"  # Print it out for verification
+
+          # Trim any leading/trailing whitespace
+          validation_result=$(echo "$validation_result" | xargs)
           echo "Trimmed Validation result: '$validation_result'"  # Show the trimmed value
 
-      - name: Debug - Check Type of Validation Result
+      - name: Debug - Check Length of validation_result
         run: |
-          echo "Debugging: Type of validation_result"
-          echo "Type of validation_result: $(file -b validation_result.txt)"
+          echo "Debugging: Length of validation_result"
           echo "Length of validation_result: ${#validation_result}"
 
-      - name: Deploy Validated Delta Components to Salesforce Prod Org
+      - name: Debug - Compare validation_result
         run: |
           echo "Debugging: Comparing validation_result value"
           if [[ "$validation_result" == "Validation successful" ]]; then
