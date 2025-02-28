@@ -97,8 +97,15 @@ jobs:
           validation_result=$(echo "$validation_result" | xargs)  # Trim any leading/trailing whitespace
           echo "Trimmed Validation result: '$validation_result'"  # Show the trimmed value
 
+      - name: Debug - Check Type of Validation Result
+        run: |
+          echo "Debugging: Type of validation_result"
+          echo "Type of validation_result: $(file -b validation_result.txt)"
+          echo "Length of validation_result: ${#validation_result}"
+
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
+          echo "Debugging: Comparing validation_result value"
           if [[ "$validation_result" == "Validation successful" ]]; then
             echo "Validation successful. Proceeding with deployment."
             sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
