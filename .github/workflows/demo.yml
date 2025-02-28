@@ -68,7 +68,7 @@ jobs:
             exit 1
           fi
 
-      - name: Debug: Check validation result file before upload
+      - name: Debug Check validation result file before upload
         run: |
           echo "Checking if validation_result.txt exists..."
           cat validation_result.txt || echo "File not found"
