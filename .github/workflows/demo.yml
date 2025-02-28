@@ -68,7 +68,7 @@ jobs:
             exit 1
           fi
 
-      - name: Debug: Check if validation_result.txt exists before upload
+      - name: Debug:Check if validation_result.txt exists before upload
         run: |
           echo "Checking if validation_result.txt exists..."
           ls -l validation_result.txt  # Ensure the file exists and output its details
