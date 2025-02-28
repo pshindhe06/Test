@@ -62,13 +62,16 @@ jobs:
             echo "No test classes found. Running with NoTestRun."
             sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunLocalTests --json
           fi
+          
           # Capture the exit code of the validation process
           if [[ $? -eq 0 ]]; then
             echo "Validation successful"
-            echo "validation_success=true" >> $GITHUB_OUTPUT  # Correctly write to GITHUB_OUTPUT
+            echo "validation_success=true" >> $GITHUB_ENV  # Write environment variable for use in next job
+            echo "validation_success=true" >> $GITHUB_OUTPUT  # Set output for next job
           else
             echo "Validation failed"
-            echo "validation_success=false" >> $GITHUB_OUTPUT  # Correctly write to GITHUB_OUTPUT
+            echo "validation_success=false" >> $GITHUB_ENV  # Write environment variable for use in next job
+            echo "validation_success=false" >> $GITHUB_OUTPUT  # Set output for next job
             exit 1
           fi
 
