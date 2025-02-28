@@ -7,8 +7,6 @@ Public Account acc(string name)
 return a;
 
 
-
-
 /*testing*/
 }
 }
