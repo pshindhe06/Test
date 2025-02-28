@@ -108,7 +108,13 @@ jobs:
 
       - name: Deploy if validation successful
         run: |
+          # Check if validation_result is set correctly
           echo "Debugging: Comparing validation_result value"
+          if [[ -z "$validation_result" ]]; then
+            echo "Validation result is empty. Skipping deployment."
+            exit 1
+          fi
+
           if [[ "$validation_result" == "Validation successful" ]]; then
             echo "Validation successful. Proceeding with deployment."
             sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
