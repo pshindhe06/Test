@@ -45,12 +45,20 @@ jobs:
           echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
           npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
 
-      # Extract test class names from package.xml
+     # Extract Test Classes from package.xml that contain 'Test' in their names
       - name: Extract Test Classes
         id: extract_tests
         run: |
+          # Extract all class names in <members> tags
           test_classes=$(grep -oP "<members>([A-Za-z0-9_]+)</members>" manifest/package.xml | sed -E 's/<members>(.*)<\/members>/\1/')
-          echo "test_classes=$test_classes" >> $GITHUB_ENV
+          # Filter for classes containing 'Test' in the name
+          test_classes=$(echo "$test_classes" | grep -i "Test")
+          # If test_classes contains anything, output it; otherwise, set as empty.
+          if [ -n "$test_classes" ]; then
+            echo "test_classes=$test_classes" >> $GITHUB_ENV
+          else
+            echo "test_classes=" >> $GITHUB_ENV
+          fi
 
 
       # Validate Delta Changes in Salesforce Prod Org
