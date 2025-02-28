@@ -65,12 +65,10 @@ jobs:
           # Capture the exit code of the validation process
           if [[ $? -eq 0 ]]; then
             echo "Validation successful"
-            echo "validation_success=true" >> $GITHUB_ENV
-            echo "::set-output name=validation_success::true"  # Set the output explicitly
+            echo "validation_success=true" >> $GITHUB_OUTPUT  # Write to GITHUB_OUTPUT
           else
             echo "Validation failed"
-            echo "validation_success=false" >> $GITHUB_ENV
-            echo "::set-output name=validation_success::false"  # Set the output explicitly
+            echo "validation_success=false" >> $GITHUB_OUTPUT  # Write to GITHUB_OUTPUT
             exit 1
           fi
 
@@ -88,7 +86,7 @@ jobs:
       - name: Debug - Show the value of validation_success
         run: |
           echo "validation_success=${{ needs.validate-prod.outputs.validation_success }}"
-          
+
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
           echo "Deploying validated delta components to Salesforce Prod Org..."
