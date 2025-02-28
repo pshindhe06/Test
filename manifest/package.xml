@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
-    <!-- The name of your package -->
     <types>
-          <members>A1</members>
-         <members>A1Test</members>
+        <members>A1</members>
+        <members>A1Test</members> <!-- Specify your test class here -->
+        <name>ApexClass</name> <!-- Define the type as ApexClass -->
     </types>
-    
-    
-    <version>56.0</version> 
+    <version>52.0</version> <!-- Use the API version appropriate for your Salesforce Org -->
 </Package>
