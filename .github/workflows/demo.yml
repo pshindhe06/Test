@@ -52,17 +52,17 @@ jobs:
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           if [ -n "$test_classes" ]; then
             echo "Running specified tests: $test_classes"
-            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json > validation_result.json
           else
             echo "No test classes found. Running with NoTestRun."
-            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunLocalTests --json
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunLocalTests --json > validation_result.json
           fi
 
           # Capture the exit code of the validation process
           if [[ $? -eq 0 ]]; then
-            echo "Validation successful" > validation_result.txt  # Store result in a file
+            echo '{"status": "Validation successful"}' > validation_result.json  # Store result in a JSON file
           else
-            echo "Validation failed" > validation_result.txt  # Store failure in a file
+            echo '{"status": "Validation failed"}' > validation_result.json  # Store failure in a JSON file
             exit 1
           fi
 
@@ -70,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: validation-result
-          path: validation_result.txt  # Upload the validation result file
+          path: validation_result.json  # Upload the JSON result file
 
   deploy-prod:
     runs-on: ubuntu-latest
@@ -85,26 +85,26 @@ jobs:
           name: validation-result
           path: ./  # Download the artifact to the current directory
 
-      - name: Debug - Check contents of validation_result.txt
+      - name: Debug - Check contents of validation_result.json
         run: |
-          echo "Debugging: Contents of validation_result.txt"
-          cat validation_result.txt  # Output the contents of the file for debugging
+          echo "Debugging: Contents of validation_result.json"
+          cat validation_result.json  # Output the contents of the file for debugging
 
       - name: Debug - Check file existence and size
         run: |
-          echo "Debugging: Checking if validation_result.txt exists and its size"
-          ls -l validation_result.txt  # Check if file exists and print file size
+          echo "Debugging: Checking if validation_result.json exists and its size"
+          ls -l validation_result.json  # Check if file exists and print file size
 
-      - name: Read Validation Result
+      - name: Read Validation Result Using jq
         run: |
-          echo "Reading validation result from the file..."
-          validation_result=$(cat validation_result.txt)  # Read the result from the file
+          echo "Reading validation result from the JSON file..."
+          validation_result=$(jq -r '.status' validation_result.json)  # Read the result from JSON using jq
           echo "Read Validation result: '$validation_result'"  # Print it out for verification
 
-      - name: Debug - Ensure no unwanted trimming
+      - name: Debug - Ensure correct value from JSON
         run: |
-          echo "Length of validation_result before comparison: ${#validation_result}"
-          echo "Trimmed validation_result: '${validation_result}'"  # Show trimmed value
+          echo "Trimmed validation_result: '$validation_result'"
+          echo "Length of validation_result: ${#validation_result}"
 
       - name: Deploy if validation successful
         run: |
