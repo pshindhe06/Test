@@ -67,13 +67,14 @@ jobs:
           if [[ $? -eq 0 ]]; then
             echo "Validation successful"
             echo "validation_success=true" >> $GITHUB_ENV  # Write environment variable for use in next job
-            echo "validation_success=true" >> $GITHUB_OUTPUT  # Set output for next job
+            echo "{validation_success}={true}" >> $GITHUB_OUTPUT  # Set output for next job
           else
             echo "Validation failed"
             echo "validation_success=false" >> $GITHUB_ENV  # Write environment variable for use in next job
-            echo "validation_success=false" >> $GITHUB_OUTPUT  # Set output for next job
+            echo "{validation_success}={false}" >> $GITHUB_OUTPUT  # Set output for next job
             exit 1
           fi
+
 
   deploy-prod:
     runs-on: ubuntu-latest
