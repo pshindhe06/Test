@@ -12,16 +12,17 @@ on:
         type: choice
         options:
           - validate
-          - validate and deploy
+          - deploy
 
 jobs:
   validate-prod:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate'}}
     steps:
-      - name: Checkout code
+      - name: 'Checkout code'
         uses: actions/checkout@v2
 
-      - name: Installing Node.js for SFDX CLI
+      - name: 'Installing Node.js for SFDX CLI'
         uses: actions/setup-node@v4
         with:
           node-version: 21
@@ -34,7 +35,7 @@ jobs:
         run: |
           echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
           npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
-
+          
       - name: Extract Test Classes
         id: extract_tests
         run: |
@@ -52,73 +53,33 @@ jobs:
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           if [ -n "$test_classes" ]; then
             echo "Running specified tests: $test_classes"
-            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json > validation_result.json
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
           else
             echo "No test classes found. Running with NoTestRun."
-            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunLocalTests --json > validation_result.json
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level NoRunTests --json
           fi
-
-          # Capture the exit code of the validation process
-          if [[ $? -eq 0 ]]; then
-            echo '{"status": "Validation successful"}' > validation_result.json  # Store result in a JSON file
-          else
-            echo '{"status": "Validation failed"}' > validation_result.json  # Store failure in a JSON file
-            exit 1
-          fi
-
-      - name: Upload Validation Result
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-result
-          path: validation_result.json  # Upload the JSON result file
 
   deploy-prod:
     runs-on: ubuntu-latest
-    needs: validate-prod
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy'}}
     steps:
-      - name: Checkout code
+      - name: 'Checkout code'
         uses: actions/checkout@v2
 
-      - name: Download Validation Result
-        uses: actions/download-artifact@v4
+      - name: 'Installing Node.js for SFDX CLI'
+        uses: actions/setup-node@v4
         with:
-          name: validation-result
-          path: ./  # Download the artifact to the current directory
+          node-version: 21
 
-      - name: Debug - Check contents of validation_result.json
+      - name: Set up Salesforce CLI
         run: |
-          echo "Debugging: Contents of validation_result.json"
-          cat validation_result.json  # Output the contents of the file for debugging
+          npm install @salesforce/cli --global
 
-      - name: Debug - Check file existence and size
+      - name: Authenticate to Salesforce Org (Auth File)
         run: |
-          echo "Debugging: Checking if validation_result.json exists and its size"
-          ls -l validation_result.json  # Check if file exists and print file size
-
-      - name: Read Validation Result Using jq
+          echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
+          npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
+          
+      - name: Only deploy if validation was successful
         run: |
-          echo "Reading validation result from the JSON file..."
-          validation_result=$(jq -r '.status' validation_result.json)  # Read the result from JSON using jq
-          echo "Read Validation result: '$validation_result'"  # Print it out for verification
-
-      - name: Debug - Ensure correct value from JSON
-        run: |
-          echo "Trimmed validation_result: '$validation_result'"
-          echo "Length of validation_result: ${#validation_result}"
-
-      - name: Deploy if validation successful
-        run: |
-          # Check if validation_result is set correctly
-          echo "Debugging: Comparing validation_result value"
-          if [[ -z "$validation_result" ]]; then
-            echo "Validation result is empty. Skipping deployment."
-            exit 1
-          fi
-
-          if [[ "$validation_result" == "Validation successful" ]]; then
-            echo "Validation successful. Proceeding with deployment."
-            sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
-          else
-            echo "Validation failed. Skipping deployment."
-            exit 1
-          fi
+           sf project deploy start -x manifest/package.xml -o prakash06
