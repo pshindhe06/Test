@@ -101,7 +101,7 @@ jobs:
           echo "Validation Success Value: $validation_success"
           
           # Only deploy if validation was successful
-          if [[ "$validation_success" == "true" ]]; then
+          if [[ "$validation_success"== true ]]; then
             echo "Validation successful. Proceeding with deployment."
             sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
           else
