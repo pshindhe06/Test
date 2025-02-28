@@ -17,7 +17,7 @@ on:
 jobs:
   validate-prod:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' ||github.event.inputs.action == 'validate and deploy'}}
     steps:
       - name: 'Checkout code'
         uses: actions/checkout@v2
