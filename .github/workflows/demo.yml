@@ -66,9 +66,11 @@ jobs:
           if [[ $? -eq 0 ]]; then
             echo "Validation successful"
             echo "validation_success=true" >> $GITHUB_ENV
+            echo "::set-output name=validation_success::true"  # Set output value
           else
             echo "Validation failed"
             echo "validation_success=false" >> $GITHUB_ENV
+            echo "::set-output name=validation_success::false"  # Set output value
             exit 1
           fi
 
@@ -86,8 +88,11 @@ jobs:
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
           echo "Deploying validated delta components to Salesforce Prod Org..."
+          # Access the output from the validate-prod job
+          validation_success="${{ needs.validate-prod.outputs.validation_success }}"
+          
           # Only deploy if validation was successful
-          if [[ "${{ env.validation_success }}" == "true" ]]; then
+          if [[ "$validation_success" == "true" ]]; then
             echo "Validation successful. Proceeding with deployment."
             sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
           else
