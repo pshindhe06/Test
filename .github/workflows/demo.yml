@@ -49,7 +49,7 @@ jobs:
       - name: Extract Test Classes
         id: extract_tests
         run: |
-          test_classes=$(grep -oP "<test>([A-Za-z0-9_]+)</test>" manifest/package.xml | sed -E 's/<test>(.*)<\/test>/\1/')
+          test_classes=$(grep -oP "<members>([A-Za-z0-9_]+)</members>" manifest/package.xml | sed -E 's/<members>(.*)<\/members>/\1/')
           echo "test_classes=$test_classes" >> $GITHUB_ENV
 
 
@@ -58,7 +58,7 @@ jobs:
         run: |
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           if [ -n "$test_classes" ]; then
-            echo "Running specified tests: $test_classes"
+            echo "Running specified tests:$test_classes"
             sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
           else
             echo "No test classes found in package.xml. Running without tests."
