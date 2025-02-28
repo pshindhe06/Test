@@ -18,76 +18,79 @@ on:
 jobs:
   validate-prod:
     runs-on: ubuntu-latest
-    # Ensure validate-prod runs when 'validate' or 'both' is selected, or for release branches
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
 
     steps:
-      # Checkout the release branch
       - name: Checkout Release Branch
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # Install Node.js for SFDX CLI
       - name: 'Installing Node.js for SFDX CLI'
         uses: actions/setup-node@v4
         with:
           node-version: 21
 
-      # Set up Salesforce CLI
       - name: Set up Salesforce CLI
         run: |
           npm install @salesforce/cli --global 
 
-      # Authenticate to Salesforce Prod Org using Auth File
       - name: Authenticate to Salesforce Org (Auth File)
         run: |
           echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
           npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
 
-     # Extract Test Classes from package.xml that contain 'Test' in their names
       - name: Extract Test Classes
         id: extract_tests
         run: |
-          # Extract all class names in <members> tags
           test_classes=$(grep -oP "<members>([A-Za-z0-9_]+)</members>" manifest/package.xml | sed -E 's/<members>(.*)<\/members>/\1/')
-          # Filter for classes containing 'Test' in the name
           test_classes=$(echo "$test_classes" | grep -i "Test")
-          # If test_classes contains anything, output it; otherwise, set as empty.
           if [ -n "$test_classes" ]; then
             echo "test_classes=$test_classes" >> $GITHUB_ENV
           else
             echo "test_classes=" >> $GITHUB_ENV
           fi
 
-
-      # Validate Delta Changes in Salesforce Prod Org
       - name: Validate Delta Changes in Salesforce Prod Org
+        id: validate_deployment
         run: |
           echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
           if [ -n "$test_classes" ]; then
-            echo "Running specified tests:$test_classes"
+            echo "Running specified tests: $test_classes"
             sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
           else
-            echo "No test classes found in package.xml. Running without tests."
-            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level NoTestRun --json
+            echo "No test classes found. Running with NoTestRun."
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunLocalTests --json
+          fi
+          # Capture the exit code of the validation process
+          if [[ $? -eq 0 ]]; then
+            echo "Validation successful"
+            echo "validation_success=true" >> $GITHUB_ENV
+          else
+            echo "Validation failed"
+            echo "validation_success=false" >> $GITHUB_ENV
+            exit 1
           fi
 
   deploy-prod:
     runs-on: ubuntu-latest
     needs: validate-prod
-    # Ensure deploy-prod runs only when 'deploy' or 'both' is selected
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
 
     steps:
-      # Checkout the release branch
       - name: Checkout Release Branch
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # Deploy Only Validated Delta Components to Salesforce Prod Org
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
           echo "Deploying validated delta components to Salesforce Prod Org..."
-          sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
+          # Only deploy if validation was successful
+          if [[ "${{ env.validation_success }}" == "true" ]]; then
+            echo "Validation successful. Proceeding with deployment."
+            sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
+          else
+            echo "Validation failed. Skipping deployment."
+            exit 1
+          fi
