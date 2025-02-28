@@ -68,11 +68,16 @@ jobs:
             exit 1
           fi
 
+      - name: Debug: Check validation result file before upload
+        run: |
+          echo "Checking if validation_result.txt exists..."
+          cat validation_result.txt || echo "File not found"
+
       - name: Upload validation result artifact
         uses: actions/upload-artifact@v2
         with:
-          name: validation-result
-          path: validation_result.txt  # Upload the validation result file
+          name: validation-result  # Artifact name must be the same in both jobs
+          path: validation_result.txt  # Path to the file to upload
 
   deploy-prod:
     runs-on: ubuntu-latest
@@ -84,20 +89,30 @@ jobs:
       - name: Download validation result artifact
         uses: actions/download-artifact@v2
         with:
-          name: validation-result  # Download the validation result artifact
+          name: validation-result  # The name of the artifact must match the upload name
 
       - name: Debug - Show the value of validation_success
         run: |
           echo "Reading validation result from the downloaded file..."
-          validation_success=$(cat validation_result.txt)
-          echo "Validation Success Value: $validation_success"
+          if [ -f validation_result.txt ]; then
+            validation_success=$(cat validation_result.txt)
+            echo "Validation Success Value: $validation_success"
+          else
+            echo "Validation result file not found!"
+            exit 1
+          fi
 
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
           echo "Deploying validated delta components to Salesforce Prod Org..."
           
           # Access the validation success value from the file
-          validation_success=$(cat validation_result.txt)
+          if [ -f validation_result.txt ]; then
+            validation_success=$(cat validation_result.txt)
+          else
+            echo "Validation result file not found, skipping deployment!"
+            exit 1
+          fi
 
           # Debug the value of validation_success
           echo "Validation Success Value: $validation_success"
@@ -110,4 +125,3 @@ jobs:
             echo "Validation failed. Skipping deployment."
             exit 1
           fi
- 
