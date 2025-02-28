@@ -85,6 +85,11 @@ jobs:
           name: validation-result
           path: ./  # Download the artifact to the current directory
 
+      - name: Debug - Check contents of validation_result.txt
+        run: |
+          echo "Debugging: Contents of validation_result.txt"
+          cat validation_result.txt  # Output the contents of the file for debugging
+
       - name: Read Validation Result
         run: |
           echo "Reading validation result from the file..."
