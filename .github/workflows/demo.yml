@@ -12,20 +12,14 @@ on:
         type: choice
         options:
           - validate
-          - deploy
-          - both
+          - validate and deploy
 
 jobs:
   validate-prod:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate'}}
 
     steps:
-      - name: Checkout Release Branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
       - name: 'Installing Node.js for SFDX CLI'
         uses: actions/setup-node@v4
         with:
@@ -66,12 +60,10 @@ jobs:
           # Capture the exit code of the validation process
           if [[ $? -eq 0 ]]; then
             echo "Validation successful"
-            echo "validation_success=true" >> $GITHUB_ENV  # Write environment variable for use in next job
-            echo "{validation_success}={true}" >> $GITHUB_OUTPUT  # Set output for next job
+            echo "validation_success=true" >> $GITHUB_OUTPUT  # Correct syntax for output
           else
             echo "Validation failed"
-            echo "validation_success=false" >> $GITHUB_ENV  # Write environment variable for use in next job
-            echo "{validation_success}={false}" >> $GITHUB_OUTPUT  # Set output for next job
+            echo "validation_success=false" >> $GITHUB_OUTPUT  # Correct syntax for output
             exit 1
           fi
 
@@ -79,14 +71,9 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-latest
     needs: validate-prod
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate and deploy'}}
 
     steps:
-      - name: Checkout Release Branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
       - name: Debug - Show the value of validation_success
         run: |
           echo "Validation Success Value from validate-prod: ${{ needs.validate-prod.outputs.validation_success }}"
@@ -102,7 +89,7 @@ jobs:
           echo "Validation Success Value: $validation_success"
           
           # Only deploy if validation was successful
-          if [[ "$validation_success"== true ]]; then
+          if [[ "$validation_success" == "true" ]]; then
             echo "Validation successful. Proceeding with deployment."
             sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
           else
