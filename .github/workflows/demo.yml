@@ -17,9 +17,8 @@ on:
 jobs:
   validate-prod:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' ||github.event.inputs.action == 'validate and deploy'}}
     steps:
-      - name: 'Checkout code'
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: 'Installing Node.js for SFDX CLI'
@@ -56,45 +55,44 @@ jobs:
             sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
           else
             echo "No test classes found. Running with NoTestRun."
-            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level NoRunTests --json
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunLocalTests --json
           fi
-          
+
           # Capture the exit code of the validation process
           if [[ $? -eq 0 ]]; then
             echo "Validation successful"
-            echo "validation_success=true" >> $GITHUB_OUTPUT
+            echo "validation_success=true" > validation_result.txt  # Save success to a file
           else
             echo "Validation failed"
-            echo "validation_success=false" >> $GITHUB_OUTPUT
+            echo "validation_success=false" > validation_result.txt  # Save failure to a file
             exit 1
           fi
 
-
-
   deploy-prod:
     runs-on: ubuntu-latest
-    needs: validate-prod
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate and deploy' }}
+    needs: validate-prod  # Ensure this job runs after validate-prod
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Debug - Show the value of validation_success
         run: |
-          echo "Validation Success Value from validate-prod: ${{ needs.validate-prod.outputs.validation_success }}"
+          echo "Reading validation result from the file..."
+          validation_success=$(cat validation_result.txt)
+          echo "Validation Success Value: $validation_success"
 
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
           echo "Deploying validated delta components to Salesforce Prod Org..."
           
-          # Access the output from validate-prod job
-          validation_success="${{ needs.validate-prod.outputs.validation_success }}"
-          
+          # Access the validation success value from the file
+          validation_success=$(cat validation_result.txt)
+
           # Debug the value of validation_success
           echo "Validation Success Value: $validation_success"
           
           # Only deploy if validation was successful
-          if [[ "$validation_success" == "true" ]]; then
+          if [[ "$validation_success" == "validation_success=true" ]]; then
             echo "Validation successful. Proceeding with deployment."
             sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
           else
