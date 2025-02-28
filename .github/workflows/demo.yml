@@ -19,7 +19,7 @@ jobs:
   validate-prod:
     runs-on: ubuntu-latest
     # Ensure validate-prod runs when 'validate' or 'both' is selected, or for release branches
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
 
     steps:
       # Checkout the release branch
@@ -27,7 +27,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
 
       # Install Node.js for SFDX CLI
       - name: 'Installing Node.js for SFDX CLI'
@@ -46,23 +45,29 @@ jobs:
           echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
           npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
 
-          
+      # Extract test class names from package.xml
+      - name: Extract Test Classes
+        id: extract_tests
+        run: |
+          test_classes=$(grep -oPm1 "(?<=<test>[A-Za-z0-9_]+)(?=</test>)" manifest/package.xml)
+          echo "test_classes=$test_classes" >> $GITHUB_ENV
+
       # Validate Delta Changes in Salesforce Prod Org
       - name: Validate Delta Changes in Salesforce Prod Org
-         test_classes=$(grep -oPm1 "(?<=<test>[A-Za-z0-9_]+)(?=</test>)" manifest/package.xml)
-         if [ -n "$test_classes" ]; then
-          echo "Running specified tests:$test_classes"
-          sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
-         else
-          echo "No test classes found in package.xml. Running without tests."
-          sf project deploy validate -x manifest/package.xml -o prakash06 --test-level NoTestRun --json
-         fi
-   
+        run: |
+          echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
+          if [ -n "$test_classes" ]; then
+            echo "Running specified tests: $test_classes"
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
+          else
+            echo "No test classes found in package.xml. Running without tests."
+            sf project deploy validate -x manifest/package.xml -o prakash06 --test-level NoTestRun --json
+
   deploy-prod:
     runs-on: ubuntu-latest
     needs: validate-prod
     # Ensure deploy-prod runs only when 'deploy' or 'both' is selected
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/demo/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
 
     steps:
       # Checkout the release branch
@@ -71,12 +76,8 @@ jobs:
         with:
           fetch-depth: 0
 
-
       # Deploy Only Validated Delta Components to Salesforce Prod Org
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
           echo "Deploying validated delta components to Salesforce Prod Org..."
           sf project deploy start -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json
-
-
-
