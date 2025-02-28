@@ -95,22 +95,18 @@ jobs:
           echo "Debugging: Checking if validation_result.txt exists and its size"
           ls -l validation_result.txt  # Check if file exists and print file size
 
-      - name: Read Validation Result and Trim Whitespace
+      - name: Read Validation Result
         run: |
           echo "Reading validation result from the file..."
           validation_result=$(cat validation_result.txt)  # Read the result from the file
           echo "Read Validation result: '$validation_result'"  # Print it out for verification
 
-          # Trim any leading/trailing whitespace
-          validation_result=$(echo "$validation_result" | xargs)
-          echo "Trimmed Validation result: '$validation_result'"  # Show the trimmed value
-
-      - name: Debug - Check Length of validation_result
+      - name: Debug - Ensure no unwanted trimming
         run: |
-          echo "Debugging: Length of validation_result"
-          echo "Length of validation_result: ${#validation_result}"
+          echo "Length of validation_result before comparison: ${#validation_result}"
+          echo "Trimmed validation_result: '${validation_result}'"  # Show trimmed value
 
-      - name: Debug - Compare validation_result
+      - name: Deploy if validation successful
         run: |
           echo "Debugging: Comparing validation_result value"
           if [[ "$validation_result" == "Validation successful" ]]; then
