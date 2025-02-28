@@ -49,9 +49,14 @@ jobs:
           
       # Validate Delta Changes in Salesforce Prod Org
       - name: Validate Delta Changes in Salesforce Prod Org
-        run: |
-          echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..." 
-          sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --json 
+         test_classes=$(grep -oPm1 "(?<=<test>[A-Za-z0-9_]+)(?=</test>)" manifest/package.xml)
+         if [ -n "$test_classes" ]; then
+          echo "Running specified tests:$test_classes"
+          sf project deploy validate -x manifest/package.xml -o prakash06 --test-level RunSpecifiedTests --tests "$test_classes" --json
+         else
+          echo "No test classes found in package.xml. Running without tests."
+          sf project deploy validate -x manifest/package.xml -o prakash06 --test-level NoTestRun --json
+         fi
    
   deploy-prod:
     runs-on: ubuntu-latest
@@ -66,13 +71,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Sync delta changes from release branch to master branch before deployment
-      - name: Sync Delta Changes from Release Branch to Master (before deployment)
-        run: |
-          git fetch origin
-          git checkout master  # Checkout the master branch
-          git merge origin/release/${GITHUB_REF##*/}  # Merge the release branch into master
-          git push origin master  # Push the updated master branch
 
       # Deploy Only Validated Delta Components to Salesforce Prod Org
       - name: Deploy Validated Delta Components to Salesforce Prod Org
