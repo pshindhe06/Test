@@ -90,11 +90,12 @@ jobs:
           echo "Debugging: Contents of validation_result.txt"
           cat validation_result.txt  # Output the contents of the file for debugging
 
-      - name: Read Validation Result
+      - name: Read Validation Result and Trim Whitespace
         run: |
           echo "Reading validation result from the file..."
           validation_result=$(cat validation_result.txt)  # Read the result from the file
-          echo "Validation result: $validation_result"
+          validation_result=$(echo "$validation_result" | xargs)  # Trim any leading/trailing whitespace
+          echo "Trimmed Validation result: '$validation_result'"  # Show the trimmed value
 
       - name: Deploy Validated Delta Components to Salesforce Prod Org
         run: |
