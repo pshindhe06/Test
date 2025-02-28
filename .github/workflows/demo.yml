@@ -63,6 +63,7 @@ jobs:
           else
             echo "No test classes found in package.xml. Running without tests."
             sf project deploy validate -x manifest/package.xml -o prakash06 --test-level NoTestRun --json
+          fi
 
   deploy-prod:
     runs-on: ubuntu-latest
