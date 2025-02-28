@@ -71,12 +71,13 @@ jobs:
       - name: Debug Check validation result file before upload
         run: |
           echo "Checking if validation_result.txt exists..."
+          ls -l validation_result.txt  # Ensure the file exists and output its details
           cat validation_result.txt || echo "File not found"
 
       - name: Upload validation result artifact
         uses: actions/upload-artifact@v2
         with:
-          name: validation-result  # Artifact name must be the same in both jobs
+          name: validation-result  # Artifact name
           path: validation_result.txt  # Path to the file to upload
 
   deploy-prod:
