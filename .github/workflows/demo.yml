@@ -11,162 +11,72 @@ on:
         required: true
         type: choice
         options:
-          - validate
           - deploy
-          - both
 
 jobs:
-  validate-prod:
-    runs-on: ubuntu-latest
-    # Ensure validate-prod runs when 'validate' or 'both' is selected, or for release branches
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'validate' || github.event.inputs.action == 'both' }}
+ deploy-prod:
+  runs-on: ubuntu-latest
+  if: github.ref == 'refs/heads/release/*'  # Ensure it runs for a release branch
 
-    steps:
-      # Checkout the release branch
-      - name: Checkout Release Branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+  steps:
+    # Checkout the release branch
+    - name: Checkout Release Branch
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout Release Branch
-        run: |
-          git fetch origin release:refs/remotes/origin/release
-         
-          
-# Explicitly fetch master branch as well
-      - name: Checkout Master Branch
-        run: |
-          git fetch origin master:refs/remotes/origin/master
-          
- # Explicitly fetch all branches and tags
-      - name: Fetch all branches and tags
-        run: |
-          git fetch --all
-          git fetch --tags 
 
-      # Verify available branches and refs for debugging
-      - name: Verify available branches and refs
-        run: |
-          git branch -r  # List remote branches
-          git show-ref  # Show all refs (helps verify `release/*` and `master` are present)
+    # Set up Salesforce CLI
+    - name: Set up Salesforce CLI
+      uses: sfdx/actions/setup-sfdx@v1
+      with:
+        sfdx-version: '7.x'
 
-      # Install Node.js for SFDX CLI
-      - name: 'Installing Node.js for SFDX CLI'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 21
+    # Authenticate to Salesforce Prod Org using OAuth
+    - name: Authenticate to Salesforce Prod Org (OAuth)
+      run: |
+        sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
 
-      # Set up Salesforce CLI
-      - name: Set up Salesforce CLI
-        run: |
-          npm install @salesforce/cli --global
+    # Check and Delete Pre/Post-Deployment Components
+    - name: Check and Delete Pre/Post-Deployment Components
+      id: Check_and_Delete_Pre_Post_Deployment_Components
+      run: |
+        pre_deletion_needed=false
+        post_deletion_needed=false
+    
+        if [ -f manifest/destructiveChangesPre.xml ] && [ -s manifest/destructiveChangesPre.xml ]; then
+          pre_deletion_needed=true
+          echo "Pre-deployment deletion needed."
+        else
+          echo "No pre-deployment destructive changes found."
+        fi
 
-      # Install sfdx-git-delta Plugin for Delta Package Generation
-  # - name: Install sfdx-git-delta Plugin
-       # run: |
-        #  echo "Installing sfdx-git-delta plugin..."
-         # echo y | npx sfdx plugins:install sfdx-git-delta
-          #npx sfdx plugins
-          #sf plugins install sfdx-git-delta
-          
-  #    - name: Install SGD
-   #     run: echo y | sf plugins install "sfdx-git-delta@${{ vars.SGD_VERSION }}"
+        if [ -f manifest/destructiveChangesPost.xml ] && [ -s manifest/destructiveChangesPost.xml ]; then
+          post_deletion_needed=true
+          echo "Post-deployment deletion needed."
+        else
+          echo "No post-deployment destructive changes found."
+        fi
 
-          # Installing SFDX GIT Delta plugin
-      - name: 'Installing sfdx git delta'
-        run: | 
-         echo y | npx sfdx plugins:install sfdx-git-delta
-          npx sfdx plugins   
+        echo "pre_deletion_needed=$pre_deletion_needed" >> $GITHUB_ENV
+        echo "post_deletion_needed=$post_deletion_needed" >> $GITHUB_ENV
 
+    # Delete Pre/Post Deployment Components
+    - name: Delete Pre/Post Deployment Components
+      run: |
+        if [ "${{ env.pre_deletion_needed }}" == 'true' ] && [ "${{ env.post_deletion_needed }}" == 'false' ]; then
+          echo "Deleting pre-deployment components..."
+          npx sf project deploy start --manifest manifest/package.xml -o eeinfy --pre-destructive-changes manifest/destructiveChangesPre.xml
         
-
-      # Authenticate to Salesforce Prod Org using Auth File
-      - name: Authenticate to Salesforce Org (Auth File)
-        run: |
-          echo ${{ secrets.SFDX_DEMO }} > ./SFDX_INTEGRATION_URL.txt
-          npx sfdx auth:sfdxurl:store -f ./SFDX_INTEGRATION_URL.txt -a prakash06
-
-      - name: 'Create delta packages for new, modified or deleted metadata'
-        run: | 
-          mkdir delta-package
-          npx sfdx sgd:source:delta --to "HEAD" --from "HEAD^" -o delta-package/ --generate-delta -s force-app/ --json
-
-      # Generate Delta Package for Prod (Release vs Master)
-      #- name: Generate Delta Package for Prod (Release vs Master)
-        #run: |
-         # echo "Generating delta package for new, modified, and deleted components between release and master..."
-         # mkdir delta-package
-        #  sf sgd source delta --to "HEAD" --from "HEAD~1" --output-dir .
-      
-          # npx sfdx sgd:source:delta --to "refs/remotes/origin/master" --from "refs/remotes/origin/release" -o delta-package/ --generate-delta -s force-app/
-
-      # Debugging step: List Delta Package Files
-      - name: List Delta Package Files
-        run: |
-          ls -R delta-package
-
-      - name: Check Package.xml Contents
-        run: |
-         cat delta-package/package/package.xml
-
-          
-      # Validate Delta Changes in Salesforce Prod Org
-      - name: Validate Delta Changes in Salesforce Prod Org
-        run: |
-          echo "Validating delta changes (new, modified, deleted components) in Salesforce Prod Org..."
-          mkdir -p validation-reports  # Create the folder to store reports  
-          sf project deploy validate --manifest delta-package/package/package.xml -o prakash06 --test-level RunLocalTests --json > validation-reports/validation-report.json
-    #      npx sfdx force:source:deploy -x delta-package/package/package.xml --checkonly --test-level RunLocalTests -u prakash06 --json --wait 10
-
-      - name: Display Validation Report
-        run: |
-          cat validation-reports/validation-report.json
-
-
-  deploy-prod:
-    runs-on: ubuntu-latest
-    needs: validate-prod
-    # Ensure deploy-prod runs only when 'deploy' or 'both' is selected
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy' || github.event.inputs.action == 'both' }}
-
-    steps:
-      # Checkout the release branch
-      - name: Checkout Release Branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      # Sync delta changes from release branch to master branch before deployment
-      - name: Sync Delta Changes from Release Branch to Master (before deployment)
-        run: |
-          git fetch origin
-          git checkout master  # Checkout the master branch
-          git merge origin/release/${GITHUB_REF##*/}  # Merge the release branch into master
-          git push origin master  # Push the updated master branch
-
-      # Deploy Only Validated Delta Components to Salesforce Prod Org
-      - name: Deploy Validated Delta Components to Salesforce Prod Org
-        run: |
-          echo "Deploying validated delta components to Salesforce Prod Org..."
-          npx sfdx force:source:deploy -x delta-package/package/package.xml -w 10
-
-      # Run Apex Tests in Salesforce Prod Org
-      - name: Run Apex Tests in Salesforce Prod Org
-        run: |
-          echo "Running Apex tests in Salesforce Prod Org..."
-          sfdx force:apex:test:run --resultformat human --codecoverage --synchronous --outputdir ./testResults
-
-      # Check Code Coverage and Fail if Below 75%
-      - name: Check Code Coverage for Prod
-        run: |
-          echo "Checking Code Coverage..."
-          coverage_check=$(sfdx force:apex:test:run --resultformat json --codecoverage --synchronous | jq '.result.coverage >= 75')
-          if [ "$coverage_check" != "true" ]; then
-            echo "Code coverage is below 75%. Failing the deployment."
-            exit 1
-          fi
-
-
-         
-
-
+        elif [ "${{ env.pre_deletion_needed }}" == 'false' ] && [ "${{ env.post_deletion_needed }}" == 'true' ]; then
+          echo "Deleting post-deployment components..."
+          npx sf project deploy start --manifest manifest/package.xml -o eeinfy --post-destructive-changes manifest/destructiveChangesPost.xml
+        
+        elif [ "${{ env.pre_deletion_needed }}" == 'false' ] && [ "${{ env.post_deletion_needed }}" == 'false' ]; then
+          echo "Deploying components..."
+          npx sf project deploy start --manifest manifest/package.xml -o eeinfy
+        
+        elif [ "${{ env.pre_deletion_needed }}" == 'true' ] && [ "${{ env.post_deletion_needed }}" == 'true' ]; then
+          echo "Deleting pre and post-deployment components..."
+          npx sf project deploy start --manifest manifest/package.xml -o eeinfy --pre-destructive-changes manifest/destructiveChangesPre.xml --post-destructive-changes manifest/destructiveChangesPost.xml
+        fi
