@@ -16,7 +16,6 @@ on:
 jobs:
  deploy-prod:
   runs-on: ubuntu-latest
-  if: github.ref == 'refs/heads/release/*'  # Ensure it runs for a release branch
 
   steps:
     # Checkout the release branch
