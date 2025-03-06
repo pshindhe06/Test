@@ -1,9 +1,5 @@
 name: Salesforce Release and Deployment
 
-on:
-  push:
-    branches:
-      - release/*  # Trigger on release branch creation
   workflow_dispatch:
     inputs:
       action:
