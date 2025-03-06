@@ -1,5 +1,5 @@
 name: Salesforce Release and Deployment
-
+on:
   workflow_dispatch:
     inputs:
       action:
