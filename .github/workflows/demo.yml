@@ -31,16 +31,15 @@ jobs:
         run: |
           sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
 
-      # Check and Delete Pre/Post-Deployment Components
       - name: Check and Delete Pre/Post-Deployment Components
         id: Check_and_Delete_Pre_Post_Deployment_Components
         run: |
           pre_deletion_needed=false
           post_deletion_needed=false
-        
+          
           if [ -f manifest/destructiveChangesPre.xml ] && [ -s manifest/destructiveChangesPre.xml ]; then
             pre_deletion_needed=true
-            echo "Pre-deployment deletion needed."
+            echo "Pre-deployment deletion is needed."
           else
             echo "No pre-deployment destructive changes found."
           fi
@@ -55,22 +54,21 @@ jobs:
           echo "pre_deletion_needed=$pre_deletion_needed" >> $GITHUB_ENV
           echo "post_deletion_needed=$post_deletion_needed" >> $GITHUB_ENV
 
-      # Delete Pre/Post Deployment Components
       - name: Delete Pre/Post Deployment Components
         run: |
-          if [ "${{ env.pre_deletion_needed }}" == 'true' ] && [ "${{ env.post_deletion_needed }}" == 'false' ]; then
+          if [ "${{ env.pre_deletion_needed }}" == "true" ] && [ "${{ env.post_deletion_needed }}" == "false" ]; then
             echo "Deleting pre-deployment components..."
             npx sf project deploy start --manifest manifest/package.xml -o eeinfy --pre-destructive-changes manifest/destructiveChangesPre.xml
-          
-          elif [ "${{ env.pre_deletion_needed }}" == 'false' ] && [ "${{ env.post_deletion_needed }}" == 'true' ]; then
+            
+          elif [ "${{ env.pre_deletion_needed }}" == "false" ] && [ "${{ env.post_deletion_needed }}" == "true" ]; then
             echo "Deleting post-deployment components..."
             npx sf project deploy start --manifest manifest/package.xml -o eeinfy --post-destructive-changes manifest/destructiveChangesPost.xml
-          
-          elif [ "${{ env.pre_deletion_needed }}" == 'false' ] && [ "${{ env.post_deletion_needed }}" == 'false' ]; then
-            echo "Deploying components..."
-            npx sf project deploy start --manifest manifest/package.xml -o eeinfy
-          
-          elif [ "${{ env.pre_deletion_needed }}" == 'true' ] && [ "${{ env.post_deletion_needed }}" == 'true' ]; then
+            
+          elif [ "${{ env.pre_deletion_needed }}" == "true" ] && [ "${{ env.post_deletion_needed }}" == "true" ]; then
             echo "Deleting pre and post-deployment components..."
             npx sf project deploy start --manifest manifest/package.xml -o eeinfy --pre-destructive-changes manifest/destructiveChangesPre.xml --post-destructive-changes manifest/destructiveChangesPost.xml
+            
+          else
+            echo "Deploying the components..."
+            npx sf project deploy start --manifest manifest/package.xml -o eeinfy
           fi
