@@ -16,13 +16,11 @@ jobs:
     steps:
       # Checkout the release branch
       - name: Checkout Release Branch
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
 
       # Set up Salesforce CLI
       - name: Set up Salesforce CLI
-        uses: sfdx/actions/setup-sfdx@v1
+        uses: sfdx/actions/setup-sfdx@<commit-id>
         with:
           sfdx-version: '7.x'
 
@@ -31,6 +29,7 @@ jobs:
         run: |
           sfdx auth:web:login --clientid ${{ secrets.SALESFORCE_CLIENT_ID }} --clientsecret ${{ secrets.SALESFORCE_CLIENT_SECRET }} --setdefaultusername --instanceurl https://prakash06-dev-ed.my.salesforce.com/
 
+      # Check and Delete Pre/Post-Deployment Components
       - name: Check and Delete Pre/Post-Deployment Components
         id: Check_and_Delete_Pre_Post_Deployment_Components
         run: |
