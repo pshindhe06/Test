@@ -5,5 +5,6 @@ public integer Bankpincode;
        long AccountNumber,MobileNumber; 
        date DOB;
         string password, pancard;
+
     }
 }

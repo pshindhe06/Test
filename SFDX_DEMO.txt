@@ -1,1 +1,1 @@
-"sfdxAuthUrl": "force://PlatformCLI::5Aep861ARUdJp8j3X3wNPRPDh89FKaYFQdCh9Be7nyEGMx6.vjCtbTkNLKTnrrYNCk9aESrINMB35Bl2gLItsDw@prakash06-dev-ed.my.salesforce.com",
+force://PlatformCLI::5Aep861ARUdJp8j3X3wNPRPDh89FKaYFQdCh9Be7nyEGMx6.vjCtbTkNLKTnrrYNCk9aESrINMB35Bl2gLItsDw@prakash06-dev-ed.my.salesforce.com

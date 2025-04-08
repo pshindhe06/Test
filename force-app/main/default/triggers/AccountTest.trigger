@@ -14,5 +14,6 @@ trigger AccountTest on Account (after insert)
      insert con;
        system.debug('The new Contact is'+con);
    }  
+
  }
 }
