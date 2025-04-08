@@ -1,0 +1,2 @@
+# Assign the DevOps team as owners for all .yml files
+*.yml @your-org/devops-team @pshindhe06
