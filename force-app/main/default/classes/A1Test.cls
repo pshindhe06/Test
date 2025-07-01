@@ -7,9 +7,6 @@ public class A1Test
     a.acc('Test Class');
 
 
-
-
-
 }
 }
 
