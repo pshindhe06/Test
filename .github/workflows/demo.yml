@@ -1,12 +1,13 @@
 name: Code Analyzer
 
-on:
+on:   
   pull_request:
     branches:
          - main
   push:
     branches: 
         - main
+        - '*'
 jobs:
   analyze:
     runs-on: ubuntu-latest
