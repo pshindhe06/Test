@@ -25,19 +25,23 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Salesforce CLI
+      - name: Setup and verify Salesforce CLI
         run: |
-          npm install -g --force @salesforce/cli@latest  
+         npm install -g --force @salesforce/cli@latest
+         sf --version
+         sf plugins list
 
-      - name: Install plugin and run Salesforce Code Analyzer
+      - name: Install latest code analyzer plugin
+        run: sf plugins install code-analyzer@latest
+
+      - name: Run Salesforce Code Analyzer
         run: |
-         sf plugins install code-analyzer@latest
          sf code-analyzer run \
           --project ./force-app \
-          --category apex,lwc \
+          --category apex lwc \
           --output json \
-          --output-file sfca_results.json \
-          --verbose
+          --output-file sfca_results.json
+
 
       - name: Upload analysis results artifact
         uses: actions/upload-artifact@v4
