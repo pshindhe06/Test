@@ -28,8 +28,7 @@ jobs:
       - name: Setup and verify Salesforce CLI
         run: |
          npm install -g --force @salesforce/cli@latest
-         sf --version
-         sf plugins list
+         
 
       - name: Install latest code analyzer plugin
         run: sf plugins install code-analyzer@latest
