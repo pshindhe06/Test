@@ -23,16 +23,25 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install Salesforce CLI
         run: |
           npm install -g --force @salesforce/cli@latest  
 
-      - name: Run Code Analyzer
-        uses: forcedotcom/run-code-analyzer@v2
+      - name: Install plugin and run Salesforce Code Analyzer
+        run: |
+         sf plugins install code-analyzer@latest
+         sf code-analyzer run \
+          --project ./force-app \
+          --category apex,lwc \
+          --output json \
+          --output-file sfca_results.json \
+          --verbose
+
+      - name: Upload analysis results artifact
+        uses: actions/upload-artifact@v4
         with:
-          run-arguments: >
-            --engine pmd
-            --target ./force-app
-            --format json
+          name: sf-code-analysis-results
+          path: sfca_results.json
+
