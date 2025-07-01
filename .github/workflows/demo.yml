@@ -27,11 +27,12 @@ jobs:
 
       - name: Install Salesforce CLI
         run: |
-          npm install sfdx-cli --global
+          npm install -g --force @salesforce/cli@latest  
 
       - name: Run Code Analyzer
         uses: forcedotcom/run-code-analyzer@v2
         with:
-          engine: 'pmd'
-          target: './force-app/main/default/classes'
-          format: 'json'
+          run-arguments: >
+            --engine pmd
+            --target ./force-app
+            --format json
