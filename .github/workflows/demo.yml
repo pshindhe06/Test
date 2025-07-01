@@ -14,32 +14,30 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Java
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
-          java-version: '21'
+          distribution: temurin
+          java-version: '17'
 
-      - name: Set up Node.js
+      - name: Setup Node 18
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '18'
 
-      - name: Setup and verify Salesforce CLI
-        run: |
-         npm install -g --force @salesforce/cli@latest
-         
+      - name: Install Salesforce CLI
+        run: npm install -g --force @salesforce/cli@latest
 
-      - name: Install latest code analyzer plugin
-        run: sf plugins install code-analyzer@latest
+      - name: Install Code Analyzer Plugin v4.1.0
+        run: sf plugins install code-analyzer@4.1.0
 
-      - name: Run Salesforce Code Analyzer
-        run: |
-         sf code-analyzer run \
-          --project ./force-app \
-          --category apex lwc \
-          --output json \
-          --output-file sfca_results.json
+      - name: Run forcedotcom Code Analyzer action
+        uses: forcedotcom/run-code-analyzer@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-arguments: '--engine pmd,eslint-lwc --target ./force-app --format json'
+          results-artifact-name: sfca-results
+
 
 
       - name: Upload analysis results artifact
