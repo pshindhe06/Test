@@ -1,7 +1,7 @@
 trigger AccountTest on Account (after insert)
 {
 
- if(Trigger.IsInsert)
+ if(Trigger.IsInsert555)
  {
   list<Contact> con= new list<Contact>();
    for(Account acc:Trigger.new)
